@@ -22,6 +22,7 @@ To view instructions for deploying the Network License Manager for MATLAB refere
 
 | Linux | Windows |
 | ----- | ------- |
+| [R2024b](releases/R2024b/README.md) | [R2024b](https://github.com/mathworks-ref-arch/license-manager-for-matlab-on-azure/blob/master/releases/R2024b/README.md) |
 | [R2024a](releases/R2024a/README.md) | [R2024a](https://github.com/mathworks-ref-arch/license-manager-for-matlab-on-azure/blob/master/releases/R2024a/README.md) |
 |                                     | [R2023b](https://github.com/mathworks-ref-arch/license-manager-for-matlab-on-azure/blob/master/releases/R2023b/README.md) |
 |                                     | [R2023a](https://github.com/mathworks-ref-arch/license-manager-for-matlab-on-azure/blob/master/releases/R2023a/README.md) |

@@ -10,11 +10,37 @@
         "description": "Azure instance type, see https://learn.microsoft.com/en-us/azure/virtual-machines/sizes."
       }
     },
-    "clientIPAddress": {
+    "existingVnetResourceID": {
+      "defaultValue": "",
       "type": "string",
-      "minLength": 1,
       "metadata": {
-        "description": "The IP address range that can be used access the license manager. This must be a valid IP CIDR range of the form x.x.x.x/x. Use the value &lt;your_public_ip_address&gt;/32 to restrict access to only your computer."
+        "description": "Use this optional parameter to specify the Resource ID of an existing virtual network to deploy your server into. If this value is not specified, a new Virtual Network will be created for the Virtual Machine."
+      }
+    },
+    "existingSubnetName": {
+      "defaultValue": "",
+      "type": "string",
+      "metadata": {
+        "description": "Use this optional parameter to specify the name of an existing subnet within your virtual network to deploy your server into. This value must be specified if an existing Virtual Network is being used."
+      }
+    },
+    "createPublicIPAddress": {
+      "type": "string",
+      "defaultValue": "No",
+      "allowedValues": [
+        "Yes",
+        "No"
+      ],
+      "metadata": {
+        "description": "Choose whether to create a public IP address for the VM."
+      }
+    },
+    "clientIPAddressList": {
+      "type": "string",
+      "defaultValue": "",
+      "minLength": 7,
+      "metadata": {
+        "description": "A list of comma separated IP address ranges that can be used to access the license manager. These must be valid IP CIDR ranges of the form x.x.x.x/x. Use the value &lt;your_client_ip_address&gt;/32 to restrict access to only your computer."
       }
     },
     "adminUsername": {
@@ -32,36 +58,73 @@
         "description": "Admin password for the chosen username. This is used to login to the Network License Manager for MATLAB dashboard. For the deployment to succeed, your password must meet [Azure's password requirements](https://docs.microsoft.com/en-us/azure/virtual-machines/linux/faq#what-are-the-password-requirements-when-creating-a-vm-)."
       }
     },
-    "virtualNetworkResourceID": {
-      "type": "string",
+    "imageID": {
+      "type": "String",
+      "defaultValue": "",
       "metadata": {
-        "description": "The Resource ID of an existing virtual network to deploy your server into. Specify this parameter only when deploying with the Existing Virtual Network option."
-      }
-    },
-    "subnetName": {
-      "type": "string",
-      "metadata": {
-        "description": "The name of an existing subnet within your virtual network to deploy your server into. Specify this parameter only when deploying with the Existing Virtual Network option."
+        "description": "Optional Resource ID of a custom managed image in the target region. Leave this field empty to use a prebuilt MathWorks image instead. Customizing the build, such as removing or modifying included scripts, may make the image incompatible with the provided ARM template. Modify the ARM template and/ or image accordingly to restore compatibility."
       }
     }
   },
   "variables": {
     "namingPrefix": "netlm",
-    "addressPrefix": [ "10.0.0.0/16" ],
+    "addressPrefix": [
+      "10.0.0.0/16"
+    ],
     "subnetPrefix": "10.0.0.0/24",
-    "newOrExistingVirtualNetwork": "Existing",
+    "createNewVirtualNetwork": "[if(empty(parameters('existingVnetResourceID')), bool('true'), bool('false'))]",
     "virtualNetworkCreateName": "[concat(variables('namingPrefix'), '-vnet')]",
     "subnetCreateName": "[concat(variables('namingPrefix'), '-subnet')]",
-    "virtualNetworkName": "[if(equals(variables('newOrExistingVirtualNetwork'),'Existing'),last(split(parameters('virtualNetworkResourceID'),'/')),variables('virtualNetworkCreateName'))]",
-    "subnetName": "[if(equals(variables('newOrExistingVirtualNetwork'),'Existing'),parameters('subnetName'),variables('subnetCreateName'))]",
+    "virtualNetworkName": "[if(variables('createNewVirtualNetwork'),variables('virtualNetworkCreateName'),last(split(parameters('existingVnetResourceID'),'/')))]",
+    "subnetName": "[if(variables('createNewVirtualNetwork'),variables('subnetCreateName'),parameters('existingSubnetName'))]",
     "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
-    "subnetId": "[if(equals(variables('newOrExistingVirtualNetwork'),'New'),variables('subnetRef'),concat(parameters('virtualNetworkResourceID'), '/subnets/', parameters('subnetName')))]",
+    "subnetId": "[if(variables('createNewVirtualNetwork'),variables('subnetRef'),concat(parameters('existingVnetResourceID'), '/subnets/', parameters('existingSubnetName')))]",
     "location": "[resourceGroup().location]",
     "serverMachineName": "[concat(take(variables('namingPrefix'), 8), '-server')]",
+    "serverIPName": "[concat(variables('serverMachineName'), '-ip')]",
+    "createPublicIPAddress": "[if(equals(parameters('createPublicIPAddress'), 'Yes'), bool('true'), bool('false'))]",
+    "domainNameLabel": "[concat(variables('serverMachineName'), '-azure-', uniqueString(resourceGroup().id))]",
+    "publicIpTimeout": "20",
+    "networkSecurityGroupName": "[concat(variables('namingPrefix'), '-nsg')]",
+    "serverNICName": "[concat(variables('serverMachineName'), '-nic')]",
+    "serverIPConfigName": "[concat(variables('serverMachineName'), '-ipconfig')]",
+    "storageAccountApiVersion": "2023-05-01",
+    "scriptPath": "/opt/mathworks/license-manager/",
+    "startScript": "setup_machine.sh",
+    "scriptExe": "[concat(variables('scriptPath'), variables('startScript'))]",
+    "runScript": "[concat('bash ', variables('scriptExe'))]",
+    "adminUsername": "[parameters('adminUsername')]",
+    "scriptArguments": "[concat(' ', variables('adminUsername'))]",
+    "setupCommand": "[concat(variables('runScript'), variables('scriptArguments'))]",
+    "nicIpConfigurationWithPublicIP": [
+      {
+        "name": "[variables('serverIPConfigName')]",
+        "properties": {
+          "subnet": {
+            "id": "[variables('subnetId')]"
+          },
+          "privateIPAllocationMethod": "Dynamic",
+          "publicIpAddress": {
+            "id": "[resourceId('Microsoft.Network/publicIpAddresses', variables('serverIPName'))]"
+          }
+        }
+      }
+    ],
+    "nicIpConfigurationWithoutPublicIP": [
+      {
+        "name": "[variables('serverIPConfigName')]",
+        "properties": {
+          "subnet": {
+            "id": "[variables('subnetId')]"
+          },
+          "privateIPAllocationMethod": "Dynamic"
+        }
+      }
+    ],
     "publisher": "mathworks-inc",
     "offer": "license-manager-ref-arch-linux",
-    "sku": "license-manager-ref-arch-linux-sku-r2024b",
-    "version": "1.0.0",
+    "sku": "license-manager-ref-arch-linux-sku-r2025a",
+    "version": "20251.0.413820",
     "imageReference": {
       "publisher": "[variables('publisher')]",
       "offer": "[variables('offer')]",
@@ -73,30 +136,16 @@
       "publisher": "[variables('publisher')]",
       "product": "[variables('offer')]"
     },
-    "serverIPName": "[concat(variables('serverMachineName'), '-ip')]",
-    "domainNameLabel": "[concat(variables('serverMachineName'), '-azure-', uniqueString(resourceGroup().id))]",
-    "publicIpTimeout": "20",
-    "networkSecurityGroupName": "[concat(variables('namingPrefix'), '-nsg')]",
-    "serverNICName": "[concat(variables('serverMachineName'), '-nic')]",
-    "serverIPConfigName": "[concat(variables('serverMachineName'), '-ipconfig')]",
-    "storageAccountApiVersion": "2018-07-01",
-
-    "scriptPath": "/opt/mathworks/license-manager/",
-    "startScript": "setup_machine.sh",
-
-    "scriptExe": "[concat(variables('scriptPath'), variables('startScript'))]", 
-    "runScript": "[concat('bash ', variables('scriptExe'))]",
-    
-    "adminUsername": "[parameters('adminUsername')]",
-    "scriptArguments": "[concat(' ', variables('adminUsername'))]",
-    
-    "setupCommand": "[concat(variables('runScript'), variables('scriptArguments'))]"
+    "imageResourceID": {
+      "id": "[parameters('imageID')]"
+    }
   },
   "resources": [
     {
       "name": "[variables('virtualNetworkName')]",
       "type": "Microsoft.Network/virtualNetworks",
-      "apiVersion": "2022-07-01",
+      "condition": "[variables('createNewVirtualNetwork')]",
+      "apiVersion": "2024-05-01",
       "location": "[variables('location')]",
       "properties": {
         "addressSpace": {
@@ -110,13 +159,13 @@
             }
           }
         ]
-      },
-      "condition": "[or(equals(variables('newOrExistingVirtualNetwork'),'New'),equals(variables('newOrExistingVirtualNetwork'),'new'))]"
+      }
     },
     {
       "name": "[variables('serverIPName')]",
       "type": "Microsoft.Network/publicIPAddresses",
-      "apiVersion": "2022-07-01",
+      "condition": "[variables('createPublicIPAddress')]",
+      "apiVersion": "2024-05-01",
       "location": "[variables('location')]",
       "properties": {
         "publicIPAllocationMethod": "Static",
@@ -129,7 +178,7 @@
     {
       "name": "[variables('networkSecurityGroupName')]",
       "type": "Microsoft.Network/networkSecurityGroups",
-      "apiVersion": "2022-07-01",
+      "apiVersion": "2024-05-01",
       "location": "[variables('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
@@ -137,23 +186,10 @@
       "properties": {
         "securityRules": [
           {
-            "name": "default-allow-rdp",
-            "properties": {
-              "priority": 1000,
-              "sourceAddressPrefix": "[parameters('clientIPAddress')]",
-              "protocol": "Tcp",
-              "destinationPortRange": "3389",
-              "access": "Allow",
-              "direction": "Inbound",
-              "sourcePortRange": "*",
-              "destinationAddressPrefix": "*"
-            }
-          },
-          {
             "name": "allow-https",
             "properties": {
               "priority": 1010,
-              "sourceAddressPrefix": "[parameters('clientIPAddress')]",
+              "sourceAddressPrefixes": "[split(replace(parameters('clientIPAddressList'),' ', ''), ',')]",
               "protocol": "Tcp",
               "destinationPortRange": "443",
               "access": "Allow",
@@ -166,7 +202,7 @@
             "name": "allow-netlm",
             "properties": {
               "priority": 1020,
-              "sourceAddressPrefix": "[parameters('clientIPAddress')]",
+              "sourceAddressPrefixes": "[split(replace(parameters('clientIPAddressList'),' ', ''), ',')]",
               "protocol": "Tcp",
               "destinationPortRange": "27000-27010",
               "access": "Allow",
@@ -195,7 +231,7 @@
               "protocol": "TCP",
               "sourcePortRange": "*",
               "destinationPortRange": "22",
-              "sourceAddressPrefix": "[parameters('clientIPAddress')]",
+              "sourceAddressPrefixes": "[split(replace(parameters('clientIPAddressList'),' ', ''), ',')]",
               "destinationAddressPrefix": "*",
               "access": "Allow",
               "priority": 1040,
@@ -208,27 +244,14 @@
     {
       "name": "[variables('serverNICName')]",
       "type": "Microsoft.Network/networkInterfaces",
-      "apiVersion": "2022-07-01",
+      "apiVersion": "2024-05-01",
       "location": "[variables('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/publicIPAddresses/', variables('serverIPName'))]",
         "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
       ],
       "properties": {
-        "ipConfigurations": [
-          {
-            "name": "[variables('serverIPConfigName')]",
-            "properties": {
-              "subnet": {
-                "id": "[variables('subnetId')]"
-              },
-              "privateIPAllocationMethod": "Dynamic",
-              "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('serverIPName'))]"
-              }
-            }
-          }
-        ],
+        "ipConfigurations": "[if(variables('createPublicIPAddress'), variables('nicIpConfigurationWithPublicIP'), variables('nicIpConfigurationWithoutPublicIP'))]",
         "networkSecurityGroup": {
           "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
         }
@@ -237,22 +260,22 @@
     {
       "name": "[variables('serverMachineName')]",
       "type": "Microsoft.Compute/virtualMachines",
-      "apiVersion": "2022-11-01",
+      "apiVersion": "2024-07-01",
       "location": "[variables('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkInterfaces/', variables('serverNICName'))]"
       ],
-      "plan": "[variables('plan')]",
+      "plan": "[if(empty(parameters('imageId')), variables('plan'), null())]",
       "properties": {
         "hardwareProfile": {
           "VmSize": "[parameters('instanceType')]"
         },
         "storageProfile": {
-          "imageReference": "[variables('imageReference')]",
+          "imageReference": "[if(empty(parameters('imageId')), variables('imageReference'), variables('imageResourceID'))]",
           "osDisk": {
-            "createOption": "FromImage",
+            "createOption": "fromImage",
             "managedDisk": {
-              "storageAccountType": "Standard_LRS"
+              "storageAccountType": "Premium_LRS"
             }
           }
         },
@@ -272,16 +295,16 @@
           ]
         },
         "diagnosticsProfile": {
-            "bootDiagnostics": {
-                "enabled": false
-            }
+          "bootDiagnostics": {
+            "enabled": false
+          }
         }
       }
     },
     {
       "name": "[concat(variables('serverMachineName'), '/Installation')]",
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "apiVersion": "2019-03-01",
+      "apiVersion": "2024-07-01",
       "location": "[resourceGroup().location]",
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines', variables('serverMachineName'))]"
@@ -292,14 +315,14 @@
         "typeHandlerVersion": "2.1",
         "autoUpgradeMinorVersion": true,
         "protectedSettings": {
-          "commandToExecute": "[concat(variables('setupCommand'),' ',reference(variables('serverIPName')).dnsSettings.fqdn)]"
+          "commandToExecute": "[if(variables('createPublicIPAddress'), concat(variables('setupCommand'), ' ', reference(variables('serverIPName')).dnsSettings.fqdn),concat(variables('setupCommand'), ' ', reference(variables('serverNICName')).ipConfigurations[0].properties.privateIPAddress))]"
         }
       }
     },
     {
       "name": "nlm-azure-linux-deployment",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2022-09-01",
+      "apiVersion": "2024-07-01",
       "properties": {
         "mode": "Incremental",
         "template": {
@@ -312,7 +335,7 @@
   ],
   "outputs": {
     "NetworkLicenseManagerAddress": {
-      "value": "[concat('https://', reference(variables('serverIPName')).dnsSettings.fqdn)]",
+      "value": "[if(variables('createPublicIPAddress'), concat('https://', reference(variables('serverIPName')).dnsSettings.fqdn), concat('https://', reference(variables('serverNICName')).ipConfigurations[0].properties.privateIPAddress))]",
       "type": "string"
     }
   }

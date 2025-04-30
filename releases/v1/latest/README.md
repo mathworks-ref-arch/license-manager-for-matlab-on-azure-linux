@@ -2,29 +2,31 @@
 
 ## Step 1. Launch the Template
 
-Click the **Deploy to Azure** button below to deploy the cloud resources on Azure&reg;. This will open the Azure Portal in your web browser.
+Click the **Deploy to Azure** button below to deploy the cloud resources on Azure&reg;. This opens the Azure Portal in your web browser. You can deploy the resources in a new virtual network or in an existing virtual network.
 
-| Create Virtual network | Use Existing Virtual Network |
-| --- | --- |
-| Use this option if you would like to deploy the resources in a new virtual network:<br><br><a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmathworks-ref-arch%2Flicense-manager-for-matlab-on-azure-linux%2Fmaster%2Freleases%2FR2024b%2Fazuredeploy-R2024b.json" target="_blank"><img src="https://aka.ms/deploytoazurebutton"/></a></br></br> | Use this option if you would like to deploy the resources in an existing virtual network: <br><br><a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmathworks-ref-arch%2Flicense-manager-for-matlab-on-azure-linux%2Fmaster%2Freleases%2FR2024b%2Fazuredeploy-existing-vnet-R2024b.json" target="_blank"><img src="https://aka.ms/deploytoazurebutton"/></a></br></br> |
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmathworks-ref-arch%2Flicense-manager-for-matlab-on-azure-linux%2Fmaster%2Freleases%2FR2025a%2Fazuredeploy-R2025a.json" target="_blank"><img src="https://aka.ms/deploytoazurebutton"/></a></br></br>
+
 
 > Cluster Platform: Ubuntu 22.04 LTS
 
-> MATLAB&reg; Release: R2024b
+> MATLAB&reg; Release: R2025a
 
 ## Step 2. Configure the Cloud Resources
-Clicking the Deploy to Azure button opens the "Custom deployment" page in your browser. You can configure the parameters on this page. It is easier to complete the steps if you position these instructions and the Azure Portal window side by side.
+
+Clicking the **Deploy to Azure** button opens the "Custom deployment" page in your browser. You can configure the parameters on this page. It is easier to complete the steps if you position these instructions and the Azure Portal window side by side. Create a new resource group by clicking **Create New**. Alternatively, you can select an existing resource group, but this can cause conflicts if resources are already deployed in it.
 
 1. Specify and check the defaults for these resource parameters:
 
 | Parameter label | Description |
 | --------------- | ----------- |
 | **Instance Type** | Azure instance type, see https://learn.microsoft.com/en-us/azure/virtual-machines/sizes. |
-| **Client IP Address** | The IP address range that can be used access the license manager. This must be a valid IP CIDR range of the form x.x.x.x/x. Use the value &lt;your_public_ip_address&gt;/32 to restrict access to only your computer. |
-| **Admin Username** | Admin username, this is used to login to the Network License Manager for MATLAB dashboard. |
-| **Admin Password** | Admin password for the chosen username. This is used to login to the Network License Manager for MATLAB dashboard. |
-| **Virtual Network Resource ID** | The Resource ID of an existing virtual network to deploy your server into. Specify this parameter only when deploying with the Existing Virtual Network option. Specify this parameter only when deploying with the Existing Virtual Network option. |
-| **Subnet Name** | The name of an existing subnet within your virtual network to deploy your server into. Specify this parameter only when deploying with the Existing Virtual Network option. Specify this parameter only when deploying with the Existing Virtual Network option. |
+| **Existing Vnet Resource ID** | Use this optional parameter to specify the Resource ID of an existing virtual network to deploy your server into. If this value is not specified, a new Virtual Network will be created for the Virtual Machine. |
+| **Existing Subnet Name** | Use this optional parameter to specify the name of an existing subnet within your virtual network to deploy your server into. This value must be specified if an existing Virtual Network is being used. |
+| **Create Public IP Address** | Choose whether to create a public IP address for the VM. |
+| **Client IP Address List** | A list of comma separated IP address ranges that can be used to access the license manager. These must be valid IP CIDR ranges of the form x.x.x.x/x. Use the value &lt;your_client_ip_address&gt;/32 to restrict access to only your computer. |
+| **Admin Username** | Admin username, this is used to login to the Network License Manager for MATLAB dashboard. To avoid any deployment errors, check the list of [disallowed values](https://docs.microsoft.com/en-us/rest/api/compute/virtual-machines/create-or-update?tabs=HTTP#osprofile) for adminUsername. |
+| **Admin Password** | Admin password for the chosen username. This is used to login to the Network License Manager for MATLAB dashboard. For the deployment to succeed, your password must meet [Azure's password requirements](https://docs.microsoft.com/en-us/azure/virtual-machines/linux/faq#what-are-the-password-requirements-when-creating-a-vm-). |
+| **Image ID** | Optional Resource ID of a custom managed image in the target region. Leave this field empty to use a prebuilt MathWorks image instead. Customizing the build, such as removing or modifying included scripts, may make the image incompatible with the provided ARM template. Modify the ARM template and/ or image accordingly to restore compatibility. |
 
 
 **NOTE**: The port and hostname of the network license manager must be reachable from all virtual machines running MATLAB. It is therefore recommended that you deploy into a subnet within the same virtual network as the network license manager.
@@ -44,7 +46,7 @@ Clicking the Deploy to Azure button opens the "Custom deployment" page in your b
 1. Paste the network license manager Address URL into a web browser.
 2. Enter the username set at the time of the deployment along with the password for this user you created in Step 2.
 
-    ![Console Login](../../img/Console_Login.png)
+    ![Console Login](../../../img/Console_Login.png)
 
 > **Note**: The dashboard uses a self-signed certificate which can be changed. For information on changing the self-signed certificates, see [Change Self-signed Certificate](#change-self-signed-certificate).
 
@@ -55,13 +57,17 @@ Clicking the Deploy to Azure button opens the "Custom deployment" page in your b
 2. Click **Browse License File** to select the license file you want to upload and click **Open**.
 3. Click **Upload**.
 
-    ![Console Upload](../../img/Console_Upload.png)
+    ![Console Upload](../../../img/Console_Upload.png)
 
 You are now ready to use the network license manager on Azure.
 
 To configure your MATLAB products deployed in Azure to use the network license manager, see the product documentation. An example for MATLAB Parallel Server can be found at [MATLAB Parallel Server on Azure](https://github.com/mathworks-ref-arch/matlab-parallel-server-on-azure).
 
 # Additional Information
+
+## No Public IP Address
+If your deployment requires only a private IP address configuration, you have the option to exclude a public IP address for the virtual machine (VM). Ensure that the IP address is specified in the `Client IP Address List` parameter for the jumpbox VM or any client that will access the License Manager VM or its dashboard.
+
 ## Delete Your Cloud Resources
 You can remove the Resource Group and all associated resources when you are done with them. Note that you cannot recover resources once they are deleted.
 1. Sign in to the Azure Portal.
@@ -69,7 +75,7 @@ You can remove the Resource Group and all associated resources when you are done
 3. Select the "Delete resource group" icon to destroy all resources deplyoyed in this group.
 4. You will be prompted to enter the name of the resource group to confirm the deletion.
 
-    ![Resource Group Delete](../../img/Resource_Group_Delete.png)
+    ![Resource Group Delete](../../../img/Resource_Group_Delete.png)
 
 ## Change Self-signed Certificate
 You can change the self-signed certificate used to connect to the dashboard. To upload an HTTPS certificate:
@@ -85,6 +91,6 @@ If your resource group fails to deploy, check the Deployments section of the Res
 
 ----
 
-Copyright 2024 The MathWorks, Inc.
+Copyright 2021-2025 The MathWorks, Inc.
 
 ----

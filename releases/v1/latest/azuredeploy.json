@@ -123,8 +123,8 @@
     ],
     "publisher": "mathworks-inc",
     "offer": "license-manager-ref-arch-linux",
-    "sku": "license-manager-ref-arch-linux-sku-r2025a",
-    "version": "20251.0.413820",
+    "sku": "license-manager-ref-arch-linux-sku-r2025b",
+    "version": "20252.0.512960",
     "imageReference": {
       "publisher": "[variables('publisher')]",
       "offer": "[variables('offer')]",
@@ -164,6 +164,9 @@
     {
       "name": "[variables('serverIPName')]",
       "type": "Microsoft.Network/publicIPAddresses",
+      "sku": {
+        "name": "Standard"
+      },
       "condition": "[variables('createPublicIPAddress')]",
       "apiVersion": "2024-05-01",
       "location": "[variables('location')]",

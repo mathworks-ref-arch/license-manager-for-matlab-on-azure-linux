@@ -20,27 +20,9 @@ You are responsible for the cost of the Azure services used when you create clou
 
 To view instructions for deploying the Network License Manager for MATLAB reference architecture, select a MATLAB release:
 
-> [!IMPORTANT]  
-> MathWorks recommends using the template for the [Latest](releases/v1/latest/README.md) release, which is also compatible with prior releases of MATLAB, MATLAB Parallel Server, and MATLAB Production Server. From September 2025, this will be the only template listed here.
-
 | Linux | Windows |
 | ----- | ------- |
 | [Latest](releases/v1/latest/README.md) | [Latest](https://github.com/mathworks-ref-arch/license-manager-for-matlab-on-azure/blob/master/releases/v1/latest/README.md) |
-| [R2025a](releases/R2025a/README.md) | [R2025a](https://github.com/mathworks-ref-arch/license-manager-for-matlab-on-azure/tree/master/releases/R2025a/README.md) |
-| [R2024b](releases/R2024b/README.md) | [R2024b](https://github.com/mathworks-ref-arch/license-manager-for-matlab-on-azure/tree/master/releases/R2024b/README.md) |
-| [R2024a](releases/R2024a/README.md) | [R2024a](https://github.com/mathworks-ref-arch/license-manager-for-matlab-on-azure/tree/master/releases/R2024a/README.md) |
-|  | [R2023b](https://github.com/mathworks-ref-arch/license-manager-for-matlab-on-azure/tree/master/releases/R2023b/README.md) |
-|  | [R2023a](https://github.com/mathworks-ref-arch/license-manager-for-matlab-on-azure/tree/master/releases/R2023a/README.md) |
-|  | [R2022b](https://github.com/mathworks-ref-arch/license-manager-for-matlab-on-azure/tree/master/releases/R2022b/README.md) |
-|  | [R2022a](https://github.com/mathworks-ref-arch/license-manager-for-matlab-on-azure/tree/master/releases/R2022a/README.md) |
-|  | [R2021b](https://github.com/mathworks-ref-arch/license-manager-for-matlab-on-azure/tree/master/releases/R2021b/README.md) |
-|  | [R2021a](https://github.com/mathworks-ref-arch/license-manager-for-matlab-on-azure/tree/master/releases/R2021a/README.md) |
-|  | [R2020b](https://github.com/mathworks-ref-arch/license-manager-for-matlab-on-azure/tree/master/releases/R2020b/README.md) |
-|  | [R2020a](https://github.com/mathworks-ref-arch/license-manager-for-matlab-on-azure/tree/master/releases/R2020a/README.md) |
-|  | [R2019b](https://github.com/mathworks-ref-arch/license-manager-for-matlab-on-azure/tree/master/releases/R2019b/README.md) |
-|  | [R2019a\_and\_older](https://github.com/mathworks-ref-arch/license-manager-for-matlab-on-azure/tree/master/releases/R2019a_and_older/README.md) |
-
-
 
 ## Learn about Architecture
 

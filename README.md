@@ -54,6 +54,6 @@ To request assistance or additional features, contact [MathWorks Technical Suppo
 
 ----
 
-Copyright 2021-2025 The MathWorks, Inc.
+Copyright 2021-2026 The MathWorks, Inc.
 
 ----

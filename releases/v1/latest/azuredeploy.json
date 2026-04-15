@@ -4,7 +4,7 @@
   "parameters": {
     "instanceType": {
       "type": "string",
-      "defaultValue": "Standard_B1ms",
+      "defaultValue": "Standard_B2als_v2",
       "minLength": 1,
       "metadata": {
         "description": "Azure instance type, see https://learn.microsoft.com/en-us/azure/virtual-machines/sizes."
@@ -123,8 +123,8 @@
     ],
     "publisher": "mathworks-inc",
     "offer": "license-manager-ref-arch-linux",
-    "sku": "license-manager-ref-arch-linux-sku-r2025b",
-    "version": "20252.0.512960",
+    "sku": "license-manager-ref-arch-linux-sku-r2026a",
+    "version": "20261.0.780296",
     "imageReference": {
       "publisher": "[variables('publisher')]",
       "offer": "[variables('offer')]",

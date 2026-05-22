@@ -124,7 +124,7 @@
     "publisher": "mathworks-inc",
     "offer": "license-manager-ref-arch-linux",
     "sku": "license-manager-ref-arch-linux-sku-r2026a",
-    "version": "20261.0.780296",
+    "version": "20261.0.848591",
     "imageReference": {
       "publisher": "[variables('publisher')]",
       "offer": "[variables('offer')]",

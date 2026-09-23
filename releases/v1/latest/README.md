@@ -9,7 +9,7 @@ Click the **Deploy to Azure** button below to deploy the cloud resources on Azur
 
 > Cluster Platform: Ubuntu 22.04 LTS
 
-> MATLAB&reg; Release: R2026a
+> MATLAB&reg; Release: R2026b
 
 ## Step 2. Configure the Cloud Resources
 

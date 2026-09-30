@@ -64,6 +64,17 @@
       "metadata": {
         "description": "Optional Resource ID of a custom managed image in the target region. Leave this field empty to use a prebuilt MathWorks image instead. Customizing the build, such as removing or modifying included scripts, may make the image incompatible with the provided ARM template. Modify the ARM template and/ or image accordingly to restore compatibility."
       }
+    },
+    "useUniqueServerName": {
+      "type": "string",
+      "defaultValue": "No",
+      "allowedValues": [
+        "Yes",
+        "No"
+      ],
+      "metadata": {
+        "description": "Choose whether to give the Network License Manager VM a hostname that is unique to this deployment. Select No to use the fixed hostname netlm-server. Select Yes to append a string derived from the resource group to the hostname, which avoids name resolution failures when you deploy more than one license manager into the same virtual network."
+      }
     }
   },
   "variables": {
@@ -82,10 +93,13 @@
     "location": "[resourceGroup().location]",
     "resourceGroupUniqueString": "[uniqueString(resourceGroup().id)]",
     "linuxVMNameLengthLimit": 64,
-    "serverMachineName": "[take(concat(variables('namingPrefix'), variables('resourceGroupUniqueString')), variables('linuxVMNameLengthLimit'))]",
+    "useUniqueServerName": "[equals(parameters('useUniqueServerName'), 'Yes')]",
+    "fixedServerMachineName": "[concat(take(variables('namingPrefix'), 8), '-server')]",
+    "uniqueServerMachineName": "[take(concat(variables('namingPrefix'), variables('resourceGroupUniqueString')), variables('linuxVMNameLengthLimit'))]",
+    "serverMachineName": "[if(variables('useUniqueServerName'), variables('uniqueServerMachineName'), variables('fixedServerMachineName'))]",
     "serverIPName": "[concat(variables('serverMachineName'), '-ip')]",
     "createPublicIPAddress": "[if(equals(parameters('createPublicIPAddress'), 'Yes'), bool('true'), bool('false'))]",
-    "domainNameLabel": "[concat(variables('namingPrefix'), '-azure-', variables('resourceGroupUniqueString'))]",
+    "domainNameLabel": "[if(variables('useUniqueServerName'), concat(variables('namingPrefix'), '-azure-', variables('resourceGroupUniqueString')), concat(variables('fixedServerMachineName'), '-azure-', variables('resourceGroupUniqueString')))]",
     "publicIpTimeout": "20",
     "networkSecurityGroupName": "[concat(variables('namingPrefix'), '-nsg')]",
     "serverNICName": "[concat(variables('serverMachineName'), '-nic')]",
